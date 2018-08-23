@@ -1,7 +1,4 @@
-# [BaiduPCS-Go](https://github.com/iikira/BaiduPCS-Go) 相关脚本
-
-------
-
-此脚本生动形象的描述
-
-![markdown-xxx](http://t1.aixinxi.net/o_1cliglqillr31mkg1vb5mgvkpja.gif-w.jpg)
+# [BaiduPCS-Go](https://github.com/iikira/BaiduPCS-Go) 相关脚本  
+------  
+此脚本生动形象的描述  
+![xxx](https://raw.githubusercontent.com/kysdm/Some-scripts/master/BaiduPCS-Go/img-folder/-277fc80af82b843.gif)
