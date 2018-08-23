@@ -1,16 +1,19 @@
 @echo off
 
-REM 指定窗口大小
+REM 指定窗口
 mode con cols=85 lines=35
+title BaiduPCS-Go账号管理脚本
 
-REM 定义时间
-set date123=%date:~0,4%-%date:~5,2%-%date:~8,2%
+REM ###############################################
+REM 只有这里需要手动改
 
-REM 设置代理
+REM 设置代理  //此处需要按自己电脑更改
 REM set http_proxy=http://127.0.0.1:1080
 
-REM 设置BaiduPCS-Go所在目录
-set BaiduPCS_dir="D:\Program Files (x86)\BaiduPCS-Go-v3.5.4-windows-x64"
+REM 设置BaiduPCS-Go所在目录  //此处需要按自己电脑更改
+set BaiduPCS_dir="D:\Program Files\BaiduPCS-Go-v3.5.4-windows-x64"
+
+REM ###############################################
 
 :menu1
 cls
