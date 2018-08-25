@@ -19,7 +19,10 @@ REM 设置onedrive账户名 在rclone中定义的名称    //必要
 set google_account=xxxgooglecom
 
 REM 限速 M/S 
-set Speed_limit=999
+set Speed_limit=1.9
+
+REM 调用Server酱实现上传完成微信通知  //需要curl
+set ServerChan_key=
 
 REM ##############################################
 
@@ -110,13 +113,19 @@ title 大小"%d%!sun!GB" 上传目录 "%~dp0"
 echo  确定开始上传？
 pause>nul
 
-::rclone参数
+REM rclone参数
 "%rclone_dir%\rclone.exe" copy %~dp0 %google_account%:Rclone上传目录/上传中_%mulu%  --stats 6s --bwlimit %Speed_limit%M --log-level INFO
+
+REM Server酱
+curl -s -q "http://sc.ftqq.com/%ServerChan_key%.send?text=%%e8%%84%%9a%%e6%%9c%%ac%%e7%%8a%%b6%%e6%%80%%81%%e9%%80%%9a%%e7%%9f%%a5&desp=Google+Dirve%%e6%%96%%87%%e4%%bb%%b6%%e4%%b8%%8a%%e4%%bc%%a0%%e8%%84%%9a%%e6%%9c%%ac%%e5%%b7%%b2%%e7%%bb%%93%%e6%%9d%%9f%%e8%%bf%%90%%e8%%a1%%8c"
 
 echo=
 echo 上传目录 "%~dp0"
 echo=
-echo 上传结束时间 %date1% %date2%
+echo 上传开始时间 %date1% %date2%
+set date3=%date:~0,4%-%date:~5,2%-%date:~8,2%
+set date4=%time:~0,2%:%time:~3,2%:%time:~6,2%
+echo 上传结束时间 %date3% %date4%
 echo.
 echo *************************************
 echo **                                 **
