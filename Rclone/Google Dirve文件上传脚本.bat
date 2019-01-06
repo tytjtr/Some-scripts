@@ -4,24 +4,28 @@ REM 直接放置在需要上传到文件夹中
 REM 如需要上传 E:\123\Scans
 REM 则放置在 E:\123\Scans 目录中
 REM 脚本会上传 E:\123\Scans 目录中所有文件
-REM 目录路径中不允许存在 空格 & 否则报错
+REM 当文件名有很多.时，上传到网盘的文件名可能不全
 
 REM ##############################################
 REM 需要手动改的部分
 
 REM 设置代理  //默认不启用
 REM set http_proxy=http://127.0.0.1:1080
+REM set https_proxy=http://127.0.0.1:1080
 
 REM 设置rclone所在目录  //必要
-set rclone_dir=C:\rclone-v1.41-windows-amd64
+set "rclone_dir=D:\Program Files (x86)\rclone-v1.45-windows-amd64"
 
 REM 设置onedrive账户名 在rclone中定义的名称    //必要
-set google_account=xxxgooglecom
+set "google_account=xxxx"
 
 REM 限速 M/S 
-set Speed_limit=1.9
+set Speed_limit=1.12
 
-REM 调用Server酱实现上传完成微信通知  //需要curl
+REM 同时上传任务数
+set transfers=1
+
+REM 调用Server酱实现上传完成微信通知
 set ServerChan_key=
 
 REM ##############################################
@@ -35,12 +39,12 @@ set date1=%date:~0,4%-%date:~5,2%-%date:~8,2%
 set date2=%time:~0,2%:%time:~3,2%:%time:~6,2%
 
 ::取得当前文件夹名称
-for %%i in ("%cd%") do set mulu=%%~ni
+for %%i in ("%cd%") do set "mulu=%%~ni"
 
 ::获取文件夹大小
-set Dir=%~dp0
+set "Dir=%~dp0"
 for /f "tokens=3* delims= " %%a in ('dir/a-d/s "%Dir%"^|findstr /c:"个文件"') do set size=%%~a
-echo 路径：%Dir%
+echo 路径："%Dir%"
 ::echo 总大小为：%size:,=% 字节
 echo=
 ::运算
@@ -113,8 +117,8 @@ title 大小"%d%!sun!GB" 上传目录 "%~dp0"
 echo  确定开始上传？
 pause>nul
 
-REM rclone参数
-"%rclone_dir%\rclone.exe" copy %~dp0 %google_account%:Rclone上传目录/上传中_%mulu%  --stats 6s --bwlimit %Speed_limit%M --log-level INFO
+::rclone参数
+"%rclone_dir%\rclone.exe" copy "!cd!" "%google_account%:Rclone上传目录/上传中_%mulu%"  --stats 6s --bwlimit %Speed_limit%M --log-level INFO --transfers %transfers%
 
 REM Server酱
 curl -s -q "http://sc.ftqq.com/%ServerChan_key%.send?text=%%e8%%84%%9a%%e6%%9c%%ac%%e7%%8a%%b6%%e6%%80%%81%%e9%%80%%9a%%e7%%9f%%a5&desp=Google+Dirve%%e6%%96%%87%%e4%%bb%%b6%%e4%%b8%%8a%%e4%%bc%%a0%%e8%%84%%9a%%e6%%9c%%ac%%e5%%b7%%b2%%e7%%bb%%93%%e6%%9d%%9f%%e8%%bf%%90%%e8%%a1%%8c"
@@ -144,7 +148,7 @@ echo  确定？
 echo=
 pause>nul
 echo 开始移除上传中标签 && echo=
-"%rclone_dir%\rclone.exe" move  --log-level INFO --delete-empty-src-dirs %google_account%:Rclone上传目录/上传中_%mulu% %google_account%:Rclone上传目录/%mulu%
+"%rclone_dir%\rclone.exe" move  --log-level INFO --delete-empty-src-dirs "%google_account%:Rclone上传目录/上传中_%mulu%" "%google_account%:Rclone上传目录/%mulu%"
 echo=
 echo *************************************
 echo **                                 **

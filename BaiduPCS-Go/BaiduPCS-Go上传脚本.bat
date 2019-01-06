@@ -5,7 +5,7 @@ REM 直接放置在需要上传到文件夹中
 REM 如需要上传 E:\123\Scans
 REM 则放置在 E:\123\Scans 目录中
 REM 脚本会上传 E:\123\Scans 目录中所有文件
-REM 目录路径中不允许存在 空格 小括号 中括号 特殊字符 否则报错
+REM 尝试支持有特殊符号，未测试，有没有问题随缘
 
 REM ###############################################
 REM 只有这里需要手动改
@@ -14,7 +14,7 @@ REM 设置代理  //此处需要按自己电脑更改
 REM set http_proxy=http://127.0.0.1:1080
 
 REM 设置BaiduPCS-Go所在目录  //此处需要按自己电脑更改
-set BaiduPCS_dir=D:\Program Files\BaiduPCS-Go-v3.5.4-windows-x64
+set "BaiduPCS_dir=D:\Program Files\BaiduPCS-Go-v3.5.4-windows-x64"
 
 REM 调用Server酱实现上传完成微信通知  //需要curl
 set ServerChan_key=
@@ -28,13 +28,15 @@ REM 定义时间
 set date1=%date:~0,4%-%date:~5,2%-%date:~8,2%
 set date2=%time:~0,2%:%time:~3,2%:%time:~6,2%
 REM 取得当前文件夹名称
-for %%i in ("%cd%") do set mulu=%%~ni
-REM 获取文件夹大小 
-REM 某论坛大佬写的
-set Dir=%~dp0
+for %%i in ("%cd%") do set "mulu=%%~ni"
+
+REM 获取文件夹大小
+set "Dir=%~dp0"
 for /f "tokens=3* delims= " %%a in ('dir/a-d/s "%Dir%"^|findstr /c:"个文件"') do set size=%%~a
-echo 上传目录：%Dir% && echo=
+echo 路径："%Dir%"
 REM echo 总大小为：%size:,=% 字节
+echo=
+REM 运算
 set str1=%size:,=%
 set str2=1073741824
 set u=2
@@ -91,18 +93,15 @@ for /L %%a in (!len2! 1 !Len1!) do (
     ) else set sun=!sun!0
 )
      set sun=!sun:~,-%u%!.!sun:~-%u%!
-REM echo %d%!sun!
-REM echo 总大小为：%d%!sun! 字节
-REM echo 总大小为：%size% 字节
-echo 上传所需空间：%d%!sun! GB (%size% 字节)
+echo 大小：%d%!sun! GB (%size% 字节)
 echo.
+
 REM 显示当前使用的账号
 "%BaiduPCS_dir%\BaiduPCS-Go" who
 echo.
 REM 显示当前账号的配额信息
 "%BaiduPCS_dir%\BaiduPCS-Go" quota
 echo.
-REM 写自动判断不存在的 咕咕咕
 echo 用心去计算下云盘空间够不够...
 echo 使用的账户不对，就用账号管理脚本做切换（应该能切的吧...）
 echo. & echo 按任意键启动上传
@@ -111,7 +110,7 @@ pause>nul
 echo 开始上传 && ping /n 2 127.0.0.1>nul & echo.
 title 大小"%d%!sun!GB" 上传目录 "%~dp0"
 REM 将当前目录中的所有文件上传至 "BaiduPCS-Go上传目录"
-"%BaiduPCS_dir%\BaiduPCS-Go" upload  %~dp0 /BaiduPCS-Go上传目录/上传中_%mulu%
+"%BaiduPCS_dir%\BaiduPCS-Go" upload  "%~dp0" "/BaiduPCS-Go上传目录/上传中_%mulu%"
 REM 有个md5修复 可能会卡在那里 可以忽略掉修复的
 
 REM Server酱
@@ -141,7 +140,7 @@ pause>nul
 REM 移除上传中标签
 echo.
 echo 开始移除上传中标签 && echo=
-"%BaiduPCS_dir%\BaiduPCS-Go" mv /BaiduPCS-Go上传目录/上传中_%mulu% /BaiduPCS-Go上传目录/%mulu%
+"%BaiduPCS_dir%\BaiduPCS-Go" mv "/BaiduPCS-Go上传目录/上传中_%mulu%" "/BaiduPCS-Go上传目录/%mulu%"
 echo=
 echo *************************************
 echo **                                 **
