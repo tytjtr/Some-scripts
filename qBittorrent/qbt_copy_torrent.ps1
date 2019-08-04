@@ -29,15 +29,42 @@ If( $debug_switch -eq 1 )
    write-output "哈希值：$I"  | out-file  -Append  $outlog 
   }
 
-$shortI=$I.Substring(0,7)
-  
-If( ($C -eq 1) -and ("$F" -eq "$R") )
+$hash=$I.Substring(0,5)
+$domain=($T -Split("/"))[2]
+
+
+If( "$T" -eq "" )
   {
-   $outname = -join ("$D","\","$N","_","$time",".torrent")  
+    write-output "是空的"  | out-file  -Append  $outlog
+    If( ($C -eq 1) -and ("$F" -eq "$R") )
+      {
+      $outname = -join ("$D","\","$N",".","$hash",".torrent")
+      }
+    else
+      {
+      $outname = -join ("$R","\","$N",".","$hash",".torrent") 
+      }      
   }
-Else
+else 
   {
-   $outname = -join ("$R","\","$N","_","$time",".torrent")  
+  Write-Output "是有的" | Out-File   -Append  $outlog
+    If( ($C -eq 1) -and ("$F" -eq "$R") )
+      {
+      $outname = -join ("$D","\","$N",".","$domain",".","$hash",".torrent")
+      }
+    else
+      {
+      $outname = -join ("$R","\","$N",".","$domain",".","$hash",".torrent") 
+      } 
   }
+
+# If( ($C -eq 1) -and ("$F" -eq "$R") )
+#   {
+#    $outname = -join ("$D","\","$N",".","$domain",".","$hash",".torrent")
+#   }
+# else
+#   {
+#    $outname = -join ("$R","\","$N",".","$domain",".","$hash",".torrent") 
+#   }
  
 copy-Item "$BT_backup\$I.torrent"  "$outname" 
