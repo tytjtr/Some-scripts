@@ -63,19 +63,22 @@ def main():
     print(f'qBittorrent Web API: {qbt_client.app.web_api_version}')
     print("\n")
     paths = findAllTorrent(args.files)
-    try:
-        for i in range(paths.__len__()):
+    for i in range(paths.__len__()):
+        try:
             print("Torrent", (i + 1), "/", paths.__len__().__str__())
             Torrent_path = paths[i].split('==>', 1)[0]
             print(Torrent_path)
             f = qbt_client.torrents_add(torrent_files=Torrent_path, save_path=args.savepath, category=args.category, is_root_folder=True, upload_limit=args.speedlimit)
-    except Exception:
-        print("导入失败，请检查种子文件！")
-    else:
-        if f == "Ok.":
-            print(f)
-            os.remove(Torrent_path)
-            time.sleep(2)
+            time.sleep(1)
+            if f == "Ok.":
+                print(f)
+                os.remove(Torrent_path)
+                time.sleep(4)
+        except Exception:
+            print("导入失败，请检查种子文件！")
+        else:
+            pass
+
 
 if __name__ == '__main__':
     judgeprocess("qbittorrent.exe")
