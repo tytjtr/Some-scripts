@@ -82,7 +82,7 @@ def download(id, date, user, cookie):
         print(f'开始下载：{file_name}')
         try:
             urllib.request.urlretrieve(
-                illust_original_url, f'{abs_path}\\image\\{file_name}', percentage)
+                illust_original_url, f'{abs_path}\\image\\{user_id}_{file_name}', percentage)
         except urllib.error.URLError as e:
             print(e.reason)
             continue
