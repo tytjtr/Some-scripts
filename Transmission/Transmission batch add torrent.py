@@ -61,7 +61,6 @@ def add(file, _dir, headers):
 
     f = requests.post(rpc, data=data.encode('utf-8'), headers=headers)
     v = json.loads(f.text)
-    print(v)
 
     if 'invalid or corrupt torrent file' in str(v):
         print(f'无效种子：{_file}')
