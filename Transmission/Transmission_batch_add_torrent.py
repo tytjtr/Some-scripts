@@ -53,9 +53,11 @@ def start(headers):
 
 
 def add(file, _dir, headers):
-    if os.path.exists(file):
-        f = open(file, "rb").read()
-        _base64 = str(base64.b64encode(f))[2:-1]
+    if not os.path.exists(file):
+        print(f'种子文件不存在：{_file}')
+        exit(0)
+    f = open(file, "rb").read()
+    _base64 = str(base64.b64encode(f))[2:-1]
 
     data = f'''{{"method":"torrent-add","arguments":{{"paused":true,"download-dir":"{_dir}","metainfo":"{_base64}"}}}}'''
 
