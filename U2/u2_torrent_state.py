@@ -7,7 +7,7 @@
 # 没有用多线程，估计会很慢 (
 # 综上，网络差的话，凉凉
 #
-# 如如要走代理，请删除', proxies=proxies'
+# 如不需要走代理，请删除 ', proxies=proxies'
 
 import os
 import re
