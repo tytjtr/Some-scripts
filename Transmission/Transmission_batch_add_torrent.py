@@ -82,10 +82,17 @@ if __name__ == '__main__':
     _file = args.file_name
     _headers = login(url, args.username, args.password)
     _id = add(f'{abs_path}/{_file}', args.save_path, _headers)
-    time.sleep(10)  # 等待10秒，防止硬盘IO忙
+    time.sleep(15)  # 等待10秒，防止硬盘IO忙
     f1 = reannounce(_headers)
-    time.sleep(5)
+    time.sleep(10)
     f2 = start(_headers)
 
     if f1 == 'success' and f2 == 'success':
         print(f'{_file} 添加成功！')
+    else:
+        f2 = "n"
+        while f2 == 'y':
+            f2 = input('输入Y|y继续:')
+            if 'y' == f2.lower():
+                exit(1)
+                break
