@@ -4,7 +4,7 @@
 # 将脚本改成能看的过去的样子，估计能运行的吧
 # 有些变量还是定死的，如果不能满足下面的要求，那就需要自己改脚本了
 
-# 要求
+# 要求  //以下信息不一定随脚本更新而更新//
 # 假设脚本所在文件夹为x
 # accounts 文件夹放置在x中
 # accounts json 文件 1.json 2.json 3.json ... 199.json 200.json
@@ -36,6 +36,7 @@ import re
 import subprocess
 import csv
 import pymssql
+import shutil
 
 abs_path = os.path.split(os.path.realpath(__file__))[0]
 
@@ -49,16 +50,16 @@ RAR_Password = 'xxxxx'  # RAR压缩包的密码
 
 # sql server 参数
 host = 'xxx'
-user='sa'
-password2='xxxxxxxx'
-database='backup_plan'
+user = 'sa'
+password2 = 'xxxxxxxx'
+database = 'backup_plan'
 # _status 0 已下载 已做种
 # _status 1 已下载 未做种
 # _status 2 已添加 正在下载
 
 # **************用户变量********************
 
-parser = argparse.ArgumentParser(description='Automatically delete BT seeds')
+parser = argparse.ArgumentParser(description='Automatic backup of U2 seeds')
 parser.add_argument('-H', '--host', default='127.0.0.1:8080')
 parser.add_argument('-U', '--username', default='admin')
 parser.add_argument('-P', '--password', default='adminadmin')
@@ -152,15 +153,15 @@ def getdirsize(dir):
     return size
 
 
-# 列出文件夹中的文件，不包含文件夹
-def readfile(path):
-    files = os.listdir(path)
-    file_list = []
-    for file in files:  # 遍历文件夹
-        file_path = f'{path}/{file}'
-        if not os.path.isdir(file_path):
-            file_list.append(file_path)
-    return file_list
+# # 列出文件夹中的文件，不包含文件夹
+# def readfile(path):
+#     files = os.listdir(path)
+#     file_list = []
+#     for file in files:  # 遍历文件夹
+#         file_path = f'{path}/{file}'
+#         if not os.path.isdir(file_path):
+#             file_list.append(file_path)
+#     return file_list
 
 
 def rcloneexe():
@@ -182,9 +183,9 @@ def rcloneexe():
     res1 = subprocess.call(
         f'{rclone} copy {Local_directory} share:/盒子上传目录/{args.Category} --stats 30s --log-level INFO  --config "{abs_path}/rclone.conf" --drive-acknowledge-abuse --bwlimit 45M', shell=True, cwd=__dir)
     # res2 = subprocess.call(
-        # f'{rclone} copy {BT_FILCE} share:/盒子上传目录/种子文件/ --stats 30s --log-level INFO  --config "{abs_path}/rclone.conf" --drive-acknowledge-abuse --bwlimit 45M', shell=True, cwd=__dir)
+    # f'{rclone} copy {BT_FILCE} share:/盒子上传目录/种子文件/ --stats 30s --log-level INFO  --config "{abs_path}/rclone.conf" --drive-acknowledge-abuse --bwlimit 45M', shell=True, cwd=__dir)
     if res1 != 0:
-    # if res1 != 0 or res2 != 0:
+        # if res1 != 0 or res2 != 0:
         print('rclone传输出现错误！')
         rcloneexe()
     else:
@@ -209,12 +210,13 @@ def reomvefile():
             Judge = e
             print(e)
 
+
 def WriteSql(_id, _status):
     conn = pymssql.connect(host=host,
-                user=user,
-                password=password2,
-                database=database,
-                charset='utf8')
+                           user=user,
+                           password=password2,
+                           database=database,
+                           charset='utf8')
     cursor = conn.cursor()
     sql = f'''INSERT INTO u2 (id,status) VALUES({_id},{_status})'''
     cursor.execute(sql)
@@ -225,10 +227,10 @@ def WriteSql(_id, _status):
 
 def UpdateSql(_id, _status):
     conn = pymssql.connect(host=host,
-                user=user,
-                password=password2,
-                database=database,
-                charset='utf8')
+                           user=user,
+                           password=password2,
+                           database=database,
+                           charset='utf8')
     cursor = conn.cursor()
     sql = f'''UPDATE u2 SET status = {_status} WHERE id = {_id}'''
     cursor.execute(sql)
@@ -236,12 +238,13 @@ def UpdateSql(_id, _status):
     conn.commit()
     conn.close()
 
+
 def SelectSql(_id):
     conn = pymssql.connect(host=host,
-                user=user,
-                password=password2,
-                database=database,
-                charset='utf8')
+                           user=user,
+                           password=password2,
+                           database=database,
+                           charset='utf8')
     cursor = conn.cursor()
     sql = 'select * from u2'
     sql = f'''select * from u2 where id={_id}'''
@@ -251,6 +254,16 @@ def SelectSql(_id):
     conn.commit()
     conn.close()
     return rs
+
+# 获取剩余空间，仅支持 Linux
+
+
+def GetTheRemainingSpace(folder):
+    f = os.statvfs(folder)
+    # Module 'os' has no 'statvfs' member
+    # os.statvfs_result(f_bsize=4096, f_frsize=4096, f_blocks=479795290, f_bfree=122759817, f_bavail=98370109, f_files=121929728, f_ffree=121736278, f_favail=121736278, f_flag=1024, f_namemax=255)
+    return f.f_bavail * f.f_frsize
+
 
 def yunnow():
     print('############## Start ###################')
@@ -273,7 +286,7 @@ def yunnow():
     # if not os.path.exists(f'{BT_FILCE}'):  # 创建存放文件的文件夹
     #     os.mkdir(f'{BT_FILCE}')
     # copytorrent()
-    if "no" in args.Category: #种子分类中包含no字符串时脚本直接退出
+    if "no" in args.Category:  # 种子分类中包含no字符串时脚本直接退出
         print('此种子需要做种，程序退出')
 
         Judge = '1'
@@ -293,8 +306,14 @@ def yunnow():
     movefile()
     time.sleep(5)
 
-    CreateRAR()
-    time.sleep(5)
+    Maximum_Compressed_File = 100 * 1024 * 1024 * 1024  # 100G
+    Folder_Size = getdirsize(mubiaowenjianjia)
+    if Maximum_Compressed_File > Folder_Size and GetTheRemainingSpace(args.Save_path) > (Folder_Size * 1.2):
+        print(f'ID：{args.Category} 小于100G，进行压缩...')
+        CreateRAR()
+        time.sleep(5)
+    else:
+        print(f'因空间不足或种子过大，ID：{args.Category} 放弃压缩！')
 
     rcloneexe()
     time.sleep(5)
@@ -313,15 +332,16 @@ def yunnow():
 
     print('############### End ####################')
 
-def pythonnum(hashobj):
+
+def ProcessLock(hashobj):
     if os.path.exists(f'{abs_path}/zidonghua.lock'):
         with open(f'{abs_path}/zidonghua.lock', "r", encoding='utf-8-sig') as f:  # 读取数据库文件
             reader = f.readlines()
             data_lock = reader[0]
         if str(data_lock) != str(hashobj):
-            pythonnum = 1
+            code = 1
         else:
-            pythonnum = 0
+            code = 0
     else:
         with open(f'{abs_path}/zidonghua.lock', "w", encoding='utf-8-sig') as f:
             f.write(hashobj)
@@ -329,15 +349,15 @@ def pythonnum(hashobj):
             reader = f.readlines()
             data_lock = reader[0]
         if str(data_lock) != str(hashobj):
-            pythonnum = 1
+            code = 1
         else:
-            pythonnum = 0
-    return pythonnum
+            code = 0
+    return code
 
 
 def CreateRAR():
-    RAR_File_Name = f'{args.Category}-{args.Torrent_name}.rar'
     Folder = f'{args.Torrent_name}'
+    RAR_File_Name = f'{args.Category}-{Folder}.rar'
     __dir = f'{abs_path}/Downloads/{args.Category}'
     print(
         f'创建RAR文件...\nRAR文件名：{RAR_File_Name}\n被压缩文件夹：{Folder}\n运行启动路径：{__dir}')
@@ -348,19 +368,26 @@ def CreateRAR():
         if res3 != 0:
             print('RAR文件创建错误！\n')
         else:
-            print('RAR文件创建成功！\n')
+            print('RAR文件创建成功！\n开始处理无效文件...')
+            files = os.listdir(__dir)
+            # file_list = []
+            for f in files:  # 遍历文件夹
+                file_path = f'{__dir}/{f}'
+                if os.path.isdir(file_path):  # 如果是文件夹直接删除，RAR不会在文件夹中
+                    shutil.rmtree(file_path, ignore_errors=True)  # 递归删除文件夹
+                else:  # 剩下的都是文件
+                    # file_list.append(file_path) #
+                    if not file_path.lower().endswith(".rar"):  # 如果文件的后缀不是.RAR
+                        # shutil.move(f'{v}', f'{__dir}/{Folder} - RAR')
+                        os.remove(file_path)  # 删除非RAR文件，种子内容是单文件RAR的少之又少
+            print('完成！\n')
 
-            if not os.path.exists(f'{__dir}/{args.Torrent_name} - RAR'):  # 创建存放文件的文件夹
-                os.mkdir(f'{__dir}/{args.Torrent_name} - RAR')
-            for v in readfile(__dir):
-                if v.lower().endswith(".rar"):
-                    shutil.move(f'{v}', f'{__dir}/{args.Torrent_name} - RAR')
     except Exception as e:
         print(f'发生错误：{e}')
 
 
 if __name__ == '__main__':
-    while pythonnum(args.Info_hash) == 1:
+    while ProcessLock(args.Info_hash) == 1:
         print('【进程已运行】')
         time.sleep(30)
     yunnow()
