@@ -181,7 +181,8 @@ def rcloneexe():
 
     __dir = abs_path
     res1 = subprocess.call(
-        f'{rclone} copy {Local_directory} share:/盒子上传目录/{args.Category} --stats 30s --log-level INFO  --config "{abs_path}/rclone.conf" --drive-acknowledge-abuse --bwlimit 45M', shell=True, cwd=__dir)
+        # f'{rclone} copy {Local_directory} share:/盒子上传目录/{args.Category} --stats 30s --log-level INFO  --config "{abs_path}/rclone.conf" --drive-acknowledge-abuse --bwlimit 45M', shell=True, cwd=__dir)
+        f'{rclone} move {Local_directory} share:/盒子上传目录/{args.Category} --stats 10s --log-level INFO  --config "{abs_path}/rclone.conf" --drive-acknowledge-abuse --bwlimit 65M --low-level-retries 1 --retries-sleep 10s', shell=True, cwd=__dir)
     # res2 = subprocess.call(
     # f'{rclone} copy {BT_FILCE} share:/盒子上传目录/种子文件/ --stats 30s --log-level INFO  --config "{abs_path}/rclone.conf" --drive-acknowledge-abuse --bwlimit 45M', shell=True, cwd=__dir)
     if res1 != 0:
