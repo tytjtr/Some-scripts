@@ -30,22 +30,31 @@ import qbittorrentapi
 # pip3 install qbittorrent-api
 import shutil
 import argparse
-import psutil
+# import psutil
 # pip3 install psutil
 import re
 import subprocess
 import csv
-
+import pymssql
 
 abs_path = os.path.split(os.path.realpath(__file__))[0]
 
 # **************用户变量********************
 
 BT_backup = r'/root/.local/share/data/qBittorrent/BT_backup'  # 指定种子存放绝对路径
-BT_FILCE = f'{abs_path}/Downloads/ZHONGZI'  # 从 BT_backup 复制的种子文件存放位置
+# BT_FILCE = f'{abs_path}/Downloads/ZHONGZI'  # 从 BT_backup 复制的种子文件存放位置
 RAR = r'/home/rar/rar'  # RAR二进制文件绝对路径 【需要可执行权限】
 rclone = r'/home/rclone/rclone'  # rclone二进制文件绝对路径 【需要可执行权限】
 RAR_Password = 'xxxxx'  # RAR压缩包的密码
+
+# sql server 参数
+host = 'xxx'
+user='sa'
+password2='xxxxxxxx'
+database='backup_plan'
+# _status 0 已下载 已做种
+# _status 1 已下载 未做种
+# _status 2 已添加 正在下载
 
 # **************用户变量********************
 
@@ -75,11 +84,11 @@ except qbittorrentapi.LoginFailed as e:
     print(e)
 
 
-def copytorrent():
-    print('复制种子开始运行')
-    hashobj = args.Info_hash[0:5]
-    shutil.copy(f'{BT_backup}/{args.Info_hash}.torrent',
-                f'{BT_FILCE}/{args.Category}-{args.Torrent_name}.{hashobj}.torrent')
+# def copytorrent():
+#     print('复制种子开始运行')
+#     hashobj = args.Info_hash[0:5]
+#     shutil.copy(f'{BT_backup}/{args.Info_hash}.torrent',
+#                 f'{BT_FILCE}/{args.Category}-{args.Torrent_name}.{hashobj}.torrent')
 
 
 def movefile():
@@ -111,7 +120,7 @@ def AccountLimit(size):
         print('Limit 数据库不存在，初始化中...')
         data_csv = ['1', '0']  # 谷歌团队盘用户json的"最小"的文件名
 
-    Limit = 700 * 1024 * 1024 * 1024  # 每个账户传输上限
+    Limit = 650 * 1024 * 1024 * 1024  # 每个账户传输上限
     all_size = int(size) + int(data_csv[1])
     print(
         f'账户：{data_csv[0]} 已传输：{int(int(data_csv[1]) / 1024 / 1024 / 1024)}G')
@@ -172,9 +181,10 @@ def rcloneexe():
     __dir = abs_path
     res1 = subprocess.call(
         f'{rclone} copy {Local_directory} share:/盒子上传目录/{args.Category} --stats 30s --log-level INFO  --config "{abs_path}/rclone.conf" --drive-acknowledge-abuse --bwlimit 45M', shell=True, cwd=__dir)
-    res2 = subprocess.call(
-        f'{rclone} copy {BT_FILCE} share:/盒子上传目录/种子文件/ --stats 30s --log-level INFO  --config "{abs_path}/rclone.conf" --drive-acknowledge-abuse --bwlimit 45M', shell=True, cwd=__dir)
-    if res1 != 0 or res2 != 0:
+    # res2 = subprocess.call(
+        # f'{rclone} copy {BT_FILCE} share:/盒子上传目录/种子文件/ --stats 30s --log-level INFO  --config "{abs_path}/rclone.conf" --drive-acknowledge-abuse --bwlimit 45M', shell=True, cwd=__dir)
+    if res1 != 0:
+    # if res1 != 0 or res2 != 0:
         print('rclone传输出现错误！')
         rcloneexe()
     else:
@@ -187,9 +197,9 @@ def reomvefile():
     time.sleep(5)
     f = subprocess.call(f'rm -r {mubiaowenjianjia}', shell=True, cwd=__dir)
     print(f'删除下载文件返回值：{f}')
-    f2 = subprocess.call(
-        f'rm {BT_FILCE}/{args.Category}*.torrent', shell=True, cwd=__dir)
-    print(f'删除种子文件返回值：{f2}')
+    # f2 = subprocess.call(
+    #     f'rm {BT_FILCE}/{args.Category}*.torrent', shell=True, cwd=__dir)
+    # print(f'删除种子文件返回值：{f2}')
     Judge = '1'
     while Judge != '0':
         try:
@@ -199,28 +209,70 @@ def reomvefile():
             Judge = e
             print(e)
 
+def WriteSql(_id, _status):
+    conn = pymssql.connect(host=host,
+                user=user,
+                password=password2,
+                database=database,
+                charset='utf8')
+    cursor = conn.cursor()
+    sql = f'''INSERT INTO u2 (id,status) VALUES({_id},{_status})'''
+    cursor.execute(sql)
+    cursor.close()
+    conn.commit()
+    conn.close()
+
+
+def UpdateSql(_id, _status):
+    conn = pymssql.connect(host=host,
+                user=user,
+                password=password2,
+                database=database,
+                charset='utf8')
+    cursor = conn.cursor()
+    sql = f'''UPDATE u2 SET status = {_status} WHERE id = {_id}'''
+    cursor.execute(sql)
+    cursor.close()
+    conn.commit()
+    conn.close()
+
+def SelectSql(_id):
+    conn = pymssql.connect(host=host,
+                user=user,
+                password=password2,
+                database=database,
+                charset='utf8')
+    cursor = conn.cursor()
+    sql = 'select * from u2'
+    sql = f'''select * from u2 where id={_id}'''
+    cursor.execute(sql)
+    rs = cursor.fetchall()
+    cursor.close()
+    conn.commit()
+    conn.close()
+    return rs
 
 def yunnow():
     print('############## Start ###################')
     print(f'脚本所在绝对路径：{abs_path}')
     print(f'qBittorrent: {qbt_client.app.version}')
     print(f'qBittorrent Web API: {qbt_client.app.web_api_version}')
-    print("\n")
+    # print("\n")
     print(f'Torrent 名称: {args.Torrent_name}')
     print(f'分类: {args.Category}')
     # print(f'内容路径（与多文件 torrent 的根目录相同）: {args.Content_path}')
     # print(f'根目录（第一个 torrent 的子目录路径）: {args.Root_path}')
     print(f'保存路径: {args.Save_path}')
-    print(f'文件数: {args.Number_of_files}')
+    # print(f'文件数: {args.Number_of_files}')
     print(f'哈希值: {args.Info_hash}')
     print("\n")
     global mubiaowenjianjia
     mubiaowenjianjia = f'{abs_path}/Downloads/{args.Category}'
     if not os.path.exists(f'{mubiaowenjianjia}'):  # 创建存放文件的文件夹
         os.mkdir(f'{mubiaowenjianjia}')
-    if not os.path.exists(f'{BT_FILCE}'):  # 创建存放文件的文件夹
-        os.mkdir(f'{BT_FILCE}')
-    copytorrent()
+    # if not os.path.exists(f'{BT_FILCE}'):  # 创建存放文件的文件夹
+    #     os.mkdir(f'{BT_FILCE}')
+    # copytorrent()
     if "no" in args.Category: #种子分类中包含no字符串时脚本直接退出
         print('此种子需要做种，程序退出')
 
@@ -240,13 +292,26 @@ def yunnow():
     time.sleep(5)
     movefile()
     time.sleep(5)
+
     CreateRAR()
     time.sleep(5)
+
     rcloneexe()
     time.sleep(5)
     reomvefile()
-    print('############### End ####################')
 
+    print('查询数据库中...\n')
+    f = SelectSql(args.Category)
+    if not f == []:
+        UpdateSql(args.Category, 1)
+        print(f'种子：{args.Category} 成功写入数据库！')
+    else:
+        print('数据库无此ID')
+        print('强制写入数据库:')
+        WriteSql(args.Category, 1)
+        print(f'种子：{args.Category} 成功写入数据库！')
+
+    print('############### End ####################')
 
 def pythonnum(hashobj):
     if os.path.exists(f'{abs_path}/zidonghua.lock'):
@@ -279,7 +344,7 @@ def CreateRAR():
     time.sleep(3)
     try:
         res3 = subprocess.call(
-            f'{RAR} a -hp"{RAR_Password}" -v4294967296B -m0 -ma5 -rr5p -md32M "{RAR_File_Name}" "{Folder}"', shell=True, cwd=__dir)
+            f'{RAR} a -hp"{RAR_Password}" -v4G -m0 -ma5 -rr5p -md4M "{RAR_File_Name}" "{Folder}"', shell=True, cwd=__dir)
         if res3 != 0:
             print('RAR文件创建错误！\n')
         else:
